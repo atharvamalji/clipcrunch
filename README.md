@@ -51,11 +51,11 @@ The ultimate video compression tool that makes large files **smaller**, **faster
 
 ---
 
-## 🎉 **Get Started**  
+<!-- ## 🎉 **Get Started**  
 
 1. **Try It Now**: [ClipCrunch.app](https://clipcrunch.app) 🌐  
 2. **Join the Community**: [Discord](https://discord.gg/clipcrunch) 💬  
-3. **Star on GitHub**: [github.com/ClipCrunch](https://github.com/ClipCrunch) ⭐  
+3. **Star on GitHub**: [github.com/ClipCrunch](https://github.com/ClipCrunch) ⭐   -->
 
 ---
 
