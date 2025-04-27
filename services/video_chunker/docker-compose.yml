@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  chunker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: video-chunker-service
+    environment:
+      - REDIS_HOST=host.docker.internal
+    volumes:
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/temp_uploads:/app/temp_uploads
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/unprocessed_chunks:/app/unprocessed_chunks
+    deploy:
+      replicas: 5
+    restart: unless-stopped

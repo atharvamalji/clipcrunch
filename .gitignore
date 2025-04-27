@@ -11,6 +11,8 @@ processed/
 venv/
 .env/
 *.sqlite3
+temp_uploads/
+
 
 # ─── Node.js (React Frontend) ───────────────────────────
 node_modules/
@@ -50,3 +52,4 @@ coverage-final.json
 # ─── Optional: OS/Platform Specific ─────────────────────
 *.bak
 *.tmp
+backend/instance/videos.db

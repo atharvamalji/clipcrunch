@@ -1,4 +1,6 @@
+"use client";
 import React, { useRef, useState } from "react";
+import axios from "axios";
 
 interface ProcessingParams {
   chunkSize: number;
@@ -11,10 +13,10 @@ export default function UploadVideo() {
   const [file, setFile] = useState<File | null>(null);
 
   const [params, setParams] = useState<ProcessingParams>({
-    chunkSize: 50, // in MB
-    maxNodes: 5, // max nodes to distribute
-    resolution: "1080p", // default target resolution
-    codec: "h264", // default codec
+    chunkSize: 50,
+    maxNodes: 5,
+    resolution: "1080p",
+    codec: "h264",
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -46,8 +48,38 @@ export default function UploadVideo() {
     setFile(null);
   };
 
+  // 🛠 Fix input changes
+  const handleParamChange = (field: keyof ProcessingParams, value: any) => {
+    setParams((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // 🛠 Handle upload
+  const handleUpload = async () => {
+    if (!file) {
+      alert("No file selected.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("video", file);
+    formData.append("params", JSON.stringify(params));
+
+    try {
+      const response = await axios.post("http://localhost:5000/upload", formData);
+
+      console.log("Upload successful:");
+      alert("Upload successful!");
+    } catch (error) {
+      console.error("Upload failed:", error);
+      alert("Upload failed. Check console for details.");
+    }
+  };
+
   return (
-    <div className="fle flex-col space-y-4 p-4 bg-stone-100 h-full">
+    <div className="flex flex-col space-y-4 p-4 bg-stone-100 h-full">
       <div className="grid grid-cols-6 gap-4">
         <div className="bg-white col-span-6 border p-6 space-y-4">
           <p className="text-lg font-semibold text-gray-700">Upload Video</p>
@@ -90,17 +122,22 @@ export default function UploadVideo() {
           ) : (
             // File Info View
             <div className="space-y-4">
-              <div className="space-y-2 text-sm text-gray-600">
-                <p>
-                  <span className="font-medium">Filename:</span> {file.name}
-                </p>
-                <p>
-                  <span className="font-medium">Size:</span>{" "}
-                  {(file.size / (1024 * 1024)).toFixed(2)} MB
-                </p>
-                <p>
-                  <span className="font-medium">Type:</span> {file.type}
-                </p>
+              <div className="flex space-x-4">
+                <div className="aspect-16/9 border w-30 bg-black"></div>
+                <div>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <p>
+                      <span className="font-medium">Filename:</span> {file.name}
+                    </p>
+                    <p>
+                      <span className="font-medium">Size:</span>{" "}
+                      {(file.size / (1024 * 1024)).toFixed(2)} MB
+                    </p>
+                    <p>
+                      <span className="font-medium">Type:</span> {file.type}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <button
@@ -112,6 +149,7 @@ export default function UploadVideo() {
             </div>
           )}
         </div>
+
         {file && (
           <div className="bg-white col-span-6 border p-4 space-y-4">
             <div>
@@ -131,9 +169,9 @@ export default function UploadVideo() {
                   type="number"
                   className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   value={params.chunkSize}
-                  // onChange={(e) =>
-                  //   onChange("chunkSize", parseInt(e.target.value))
-                  // }
+                  onChange={(e) =>
+                    handleParamChange("chunkSize", parseInt(e.target.value))
+                  }
                 />
               </div>
 
@@ -146,7 +184,9 @@ export default function UploadVideo() {
                   type="number"
                   className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   value={params.maxNodes}
-                  // onChange={(e) => onChange("maxNodes", parseInt(e.target.value))}
+                  onChange={(e) =>
+                    handleParamChange("maxNodes", parseInt(e.target.value))
+                  }
                 />
               </div>
 
@@ -158,7 +198,9 @@ export default function UploadVideo() {
                 <select
                   className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   value={params.resolution}
-                  // onChange={(e) => onChange("resolution", e.target.value)}
+                  onChange={(e) =>
+                    handleParamChange("resolution", e.target.value)
+                  }
                 >
                   <option value="1080p">1920x1080 (1080p)</option>
                   <option value="720p">1280x720 (720p)</option>
@@ -174,7 +216,7 @@ export default function UploadVideo() {
                 <select
                   className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
                   value={params.codec}
-                  // onChange={(e) => onChange("codec", e.target.value)}
+                  onChange={(e) => handleParamChange("codec", e.target.value)}
                 >
                   <option value="h264">H.264</option>
                   <option value="vp9">VP9</option>
@@ -182,8 +224,14 @@ export default function UploadVideo() {
                 </select>
               </div>
 
+              {/* Start Processing Button */}
               <div>
-                <button>Start Video Processing</button>
+                <button
+                  onClick={handleUpload}
+                  className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-semibold"
+                >
+                  Start Video Processing
+                </button>
               </div>
             </div>
           </div>
