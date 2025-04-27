@@ -1,0 +1,52 @@
+# ─── Python (Flask Backend) ─────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.db
+instance/
+uploads/
+processed/
+.env
+venv/
+.env/
+*.sqlite3
+
+# ─── Node.js (React Frontend) ───────────────────────────
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+dist/
+build/
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# ─── Editor/IDE Configs ─────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ─── System Files ───────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ─── Docker (If you later Dockerize) ────────────────────
+*.pid
+docker-compose.override.yml
+
+# ─── Log Files ──────────────────────────────────────────
+*.log
+
+# ─── Test Coverage ──────────────────────────────────────
+coverage/
+coverage-final.json
+.nyc_output/
+
+# ─── Optional: OS/Platform Specific ─────────────────────
+*.bak
+*.tmp
