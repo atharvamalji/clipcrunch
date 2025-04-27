@@ -12,6 +12,8 @@ venv/
 .env/
 *.sqlite3
 temp_uploads/
+unprocessed_chunks/
+
 
 
 # ─── Node.js (React Frontend) ───────────────────────────
