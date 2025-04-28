@@ -37,7 +37,7 @@ services:
     environment:
       - REDIS_HOST=host.docker.internal
     volumes:
-      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/unprocessed_chunks:/app/unprocessed_chunks
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/processed_videos:/app/processed_videos
       - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/processed_chunks:/app/processed_chunks
     deploy:
       replicas: 2

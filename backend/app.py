@@ -159,7 +159,7 @@ def get_all_videos():
                 "status": video.status,
                 "uploader_ip": video.uploader_ip,
                 "size": video.size,
-                "resolution": video.resolution.value,  # Convert Enum to string
+                "resolution": f'{video.resolution.value[0]}x{video.resolution.value[1]}',  # Convert Enum to string
                 "video_bitrate": video.video_bitrate.value,  # Convert Enum to string
                 "audio_bitrate": video.audio_bitrate.value,  # Convert Enum to string
                 "crf_value": video.crf_value.value,  # Convert Enum to string
