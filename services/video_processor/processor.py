@@ -16,7 +16,12 @@ QUEUE_NAME = os.getenv('QUEUE_NAME', 'processing_jobs')
 UNPROCESSED_CHUNKS_DIR = '/app/unprocessed_chunks'
 PROCESSED_CHUNKS_DIR = '/app/processed_chunks'
 
+PROCESSING_QUEUE = 'processing_jobs'
+
+ASSEMBLER_SERVICE_METHOD = "assembler.assemble_video_task"
+
 redis_conn = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
+assembly_queue = Queue('assembly_jobs', connection=redis_conn)
 
 # ===================
 # Presets for encoding
@@ -98,24 +103,30 @@ def process_chunk(input_chunk_path, output_chunk_path, video_metadata):
     audio_codec = AudioCodec[video_metadata['audio_codec']]  # (e.g., 'aac')
     
     ensure_dir(os.path.dirname(output_chunk_path))  # Ensure the output directory exists
+
+    try:
     
-    (
-        ffmpeg_input(input_chunk_path)
-        .filter('scale', resolution.value[0], resolution.value[1])  # Scaling based on resolution
-        .output(
-            output_chunk_path,
-            **{
-                'vcodec': video_codec,  # Video codec (e.g., 'libx264')
-                'crf': crf_value.value,  # CRF value for video quality
-                'b:v': video_bitrate.value,  # Video bitrate (e.g., '2000k')
-                'preset': preset.value,  # Encoding speed preset (e.g., 'fast')
-                'acodec': audio_codec,  # Audio codec (e.g., 'aac')
-                'b:a': audio_bitrate.value,  # Audio bitrate (e.g., '128k')
-            }
+        (
+            ffmpeg_input(input_chunk_path)
+            .filter('scale', resolution.value[0], resolution.value[1])  # Scaling based on resolution
+            .output(
+                output_chunk_path,
+                **{
+                    'vcodec': video_codec.value,  # Video codec (e.g., 'libx264')
+                    'crf': crf_value.value,  # CRF value for video quality
+                    'b:v': video_bitrate.value,  # Video bitrate (e.g., '2000k')
+                    'preset': preset.value,  # Encoding speed preset (e.g., 'fast')
+                    'acodec': audio_codec.value,  # Audio codec (e.g., 'aac')
+                    'b:a': audio_bitrate.value,  # Audio bitrate (e.g., '128k')
+                    'c:v': 'copy',  # Copy video stream without re-encoding
+                    'c:a': 'copy'   # Copy audio stream without re-encoding
+                }
+            )
+            .overwrite_output()  # Overwrite the output if exists
+            .run()  # Run the FFmpeg command
         )
-        .overwrite_output()  # Overwrite the output if exists
-        .run()  # Run the FFmpeg command
-    )
+    except Exception as e:
+        print(f'error occured while ffmpeg processing: {e}')
 
 
 # ===================
@@ -130,7 +141,7 @@ def process_chunk_task(chunk_metadata, video_id):
 
         print(f"[Processor] 🚀 Processing chunk: {chunk_id} for video_id: {video_id}")
 
-        video_metadata = redis_conn.hgetall(video_id)
+        video_metadata = redis_conn.hgetall(f'video:{video_id}')
         video_metadata = {key.decode(): value.decode() for key, value in video_metadata.items()}
 
         # Set up processed output path
@@ -147,7 +158,8 @@ def process_chunk_task(chunk_metadata, video_id):
 
         if all_chunks_processed:
             # If all chunks are processed, signal the assembler to start
-            redis_conn.sadd(f"video:{video_id}:all_chunks_processed", 'done')
+            assembly_queue.enqueue(ASSEMBLER_SERVICE_METHOD, video_id)
+            # redis_conn.sadd(f"video:{video_id}:all_chunks_processed", 'done')
 
 
         print(f"[Processor] ✅ Finished processing: {output_path}")

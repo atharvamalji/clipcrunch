@@ -13,6 +13,8 @@ venv/
 *.sqlite3
 temp_uploads/
 unprocessed_chunks/
+processed_chunks/
+processed_videos/
 
 
 

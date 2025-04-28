@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  chunker:
+    build:
+      context: ./video_chunker/
+      dockerfile: Dockerfile
+    image: video-chunker-service
+    environment:
+      - REDIS_HOST=host.docker.internal
+    volumes:
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/temp_uploads:/app/temp_uploads
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/unprocessed_chunks:/app/unprocessed_chunks
+    deploy:
+      replicas: 2
+    restart: unless-stopped
+
+  processor:
+    build:
+      context: ./video_processor/
+      dockerfile: Dockerfile
+    image: video-processor-service
+    environment:
+      - REDIS_HOST=host.docker.internal
+    volumes:
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/unprocessed_chunks:/app/unprocessed_chunks
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/processed_chunks:/app/processed_chunks
+    deploy:
+      replicas: 5
+    restart: unless-stopped
+
+  assembler:
+    build:
+      context: ./video_assembler/
+      dockerfile: Dockerfile
+    image: video-assembler-service
+    environment:
+      - REDIS_HOST=host.docker.internal
+    volumes:
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/unprocessed_chunks:/app/unprocessed_chunks
+      - /Users/atharvamalji/IU/Spring 2025/ECC/clipcrunch/backend/processed_chunks:/app/processed_chunks
+    deploy:
+      replicas: 2
+    restart: unless-stopped

@@ -2,26 +2,25 @@ from database import db
 from datetime import datetime
 import enum
 
-# Enum classes for the programmable parameters
 class Resolution(enum.Enum):
-    HD = "1280x720"
-    FULL_HD = "1920x1080"
-    SD = "854x480"
+    UHD_4K = (3840, 2160)
+    QHD_2K = (2560, 1440)
+    FHD_1080 = (1920, 1080)
+    HD_720 = (1280, 720)
+    SD_480 = (854, 480)
+    MOBILE_360 = (640, 360)
 
 class VideoBitrate(enum.Enum):
-    LOW = "1000k"
-    MEDIUM = "2000k"
-    HIGH = "5000k"
+    ULTRA = "8M"
+    HIGH = "4M"
+    STANDARD = "2M"
+    LOW = "1M"
+    MOBILE = "500k"
 
 class AudioBitrate(enum.Enum):
-    LOW = "128k"
-    MEDIUM = "192k"
-    HIGH = "320k"
-
-class CRFValue(enum.Enum):
-    LOW = 18  # Higher quality
-    MEDIUM = 23  # Default quality
-    HIGH = 28  # Lower quality, smaller file
+    HIGH = "192k"
+    STANDARD = "128k"
+    LOW = "64k"
 
 class Preset(enum.Enum):
     ULTRAFAST = "ultrafast"
@@ -29,6 +28,29 @@ class Preset(enum.Enum):
     MEDIUM = "medium"
     SLOW = "slow"
     VERYSLOW = "veryslow"
+
+class VideoCodec(enum.Enum):
+    H264 = "libx264"   # H.264 codec
+    H265 = "libx265"   # HEVC codec (H.265)
+    VP8 = "vp8"        # VP8 codec (WebM)
+    VP9 = "vp9"        # VP9 codec (WebM)
+    AV1 = "av1"        # AV1 codec
+    MPEG4 = "mpeg4"    # MPEG-4 codec
+
+class AudioCodec(enum.Enum):
+    AAC = "aac"        # AAC codec
+    MP3 = "mp3"        # MP3 codec
+    OPUS = "opus"      # Opus codec
+    VORBIS = "vorbis"  # Vorbis codec
+    FLAC = "flac"      # FLAC codec (lossless)
+    PCM_S16LE = "pcm_s16le"  # PCM audio (16-bit little endian)
+
+class CRFValue(enum.Enum):
+    VERY_HIGH = 18  # High quality, large file size
+    HIGH = 23  # Default quality, balanced size
+    MEDIUM = 28  # Lower quality, smaller file size
+    LOW = 35  # Very low quality, very small file size
+    VERY_LOW = 40  # Extremely low quality, very small file size
 
 class Video(db.Model):
     id = db.Column(db.Integer, primary_key=True)

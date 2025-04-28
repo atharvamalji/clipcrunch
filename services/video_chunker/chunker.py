@@ -19,6 +19,8 @@ UNPROCESSED_CHUNKS_DIR = '/app/unprocessed_chunks'
 
 TARGET_CHUNK_SIZE_MB = 4  # Default chunk size (in MB)
 
+PROCESSOR_SERVICE_METHOD = 'processor.process_chunk_task'
+
 redis_conn = redis.Redis(host=REDIS_HOST, port=REDIS_PORT)
 
 chunking_queue = Queue(CHUNKING_QUEUE, connection=redis_conn)
@@ -85,7 +87,7 @@ def chunk_video_task(video_id, ext, chunk_size_mb=TARGET_CHUNK_SIZE_MB):
                     'status': 'pending'
                 }
                 redis_conn.hset(video_key, chunk_file, 'pending')
-                processing_queue.enqueue('processor_module.process_chunk', chunk_metadata, video_id)
+                processing_queue.enqueue(PROCESSOR_SERVICE_METHOD, chunk_metadata, video_id)
                 print(f"[Chunker] 📤 Enqueued chunk for processing: {chunk_file}")
 
         print(f"[Chunker] ✅ Finished chunking and enqueuing chunks from: {chunk_output_dir}")

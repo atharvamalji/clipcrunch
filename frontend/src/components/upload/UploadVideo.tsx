@@ -2,21 +2,89 @@
 import React, { useRef, useState } from "react";
 import axios from "axios";
 
+// Enums for options (based on the provided Python enums)
+
+const ResolutionOptions = [
+  { label: "UHD 4K (3840x2160)", value: "UHD_4K" },
+  { label: "QHD 2K (2560x1440)", value: "QHD_2K" },
+  { label: "FHD 1080p (1920x1080)", value: "FHD_1080" },
+  { label: "HD 720p (1280x720)", value: "HD_720" },
+  { label: "SD 480p (854x480)", value: "SD_480" },
+  { label: "Mobile 360p (640x360)", value: "MOBILE_360" }
+];
+
+const VideoBitrateOptions = [
+  { label: "8M (Ultra)", value: "ULTRA" },
+  { label: "4M (High)", value: "HIGH" },
+  { label: "2M (Standard)", value: "STANDARD" },
+  { label: "1M (Low)", value: "LOW" },
+  { label: "500k (Mobile)", value: "MOBILE" }
+];
+
+const AudioBitrateOptions = [
+  { label: "192k (High)", value: "HIGH" },
+  { label: "128k (Standard)", value: "STANDARD" },
+  { label: "64k (Low)", value: "LOW" }
+];
+
+const AudioCodecOptions = [
+  { label: "AAC", value: "AAC" },
+  { label: "MP3", value: "MP3" },
+  { label: "Opus", value: "OPUS" },
+  { label: "Vorbis", value: "VORBIS" },
+  { label: "FLAC", value: "FLAC" },
+  { label: "PCM", value: "PCM_S16LE" }
+];
+
+const VideoCodecOptions = [
+  { label: "H.264 (libx264)", value: "H264" },
+  { label: "H.265 (libx265)", value: "H265" },
+  { label: "VP8", value: "VP8" },
+  { label: "VP9", value: "VP9" },
+  { label: "AV1", value: "AV1" },
+  { label: "MPEG-4 (mpeg4)", value: "MPEG4" }
+];
+
+const CRFValueOptions = [
+  { label: "18 (Very High Quality)", value: "VERY_HIGH" },
+  { label: "23 (High Quality)", value: "HIGH" },
+  { label: "28 (Medium Quality)", value: "MEDIUM" },
+  { label: "35 (Low Quality)", value: "LOW" },
+  { label: "40 (Very Low Quality)", value: "VERY_LOW" }
+];
+
+const PresetOptions = [
+  { label: "ultrafast", value: "ULTRAFAST" },
+  { label: "fast", value: "FAST" },
+  { label: "medium", value: "MEDIUM" },
+  { label: "slow", value: "SLOW" },
+  { label: "veryslow", value: "VERYSLOW" }
+];
+
 interface ProcessingParams {
   chunkSize: number;
   maxNodes: number;
   resolution: string;
-  codec: string;
+  audioCodec: string;
+  audioBitrate: string;
+  videoCodec: string;
+  videoBitrate: string;
+  crfValue: string;
+  preset: string;
 }
 
 export default function UploadVideo() {
   const [file, setFile] = useState<File | null>(null);
-
   const [params, setParams] = useState<ProcessingParams>({
-    chunkSize: 50,
+    chunkSize: 4,
     maxNodes: 5,
-    resolution: "1080p",
-    codec: "h264",
+    resolution: "FHD_1080",
+    audioCodec: "MP3",
+    audioBitrate: "LOW",
+    videoCodec: "H264",
+    videoBitrate: "LOW",
+    crfValue: "MEDIUM",
+    preset: "ULTRAFAST"
   });
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -48,7 +116,7 @@ export default function UploadVideo() {
     setFile(null);
   };
 
-  // 🛠 Fix input changes
+  // 🛠 Handle parameter changes
   const handleParamChange = (field: keyof ProcessingParams, value: any) => {
     setParams((prev) => ({
       ...prev,
@@ -68,7 +136,7 @@ export default function UploadVideo() {
     formData.append("params", JSON.stringify(params));
 
     try {
-      const response = await axios.post("http://localhost:5000/upload", formData);
+      const response = await axios.post("http://localhost:5000/api/upload", formData);
 
       console.log("Upload successful:");
       alert("Upload successful!");
@@ -159,7 +227,7 @@ export default function UploadVideo() {
             </div>
 
             {/* Input Fields */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Chunk Size */}
               <div className="flex flex-col space-y-1">
                 <label className="text-sm text-gray-600 font-medium">
@@ -202,25 +270,131 @@ export default function UploadVideo() {
                     handleParamChange("resolution", e.target.value)
                   }
                 >
-                  <option value="1080p">1920x1080 (1080p)</option>
-                  <option value="720p">1280x720 (720p)</option>
-                  <option value="480p">854x480 (480p)</option>
+                  {ResolutionOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              {/* Codec */}
+              {/* Video Bitrate */}
               <div className="flex flex-col space-y-1">
                 <label className="text-sm text-gray-600 font-medium">
-                  Codec
+                  Video Bitrate
                 </label>
                 <select
                   className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  value={params.codec}
-                  onChange={(e) => handleParamChange("codec", e.target.value)}
+                  value={params.videoBitrate}
+                  onChange={(e) =>
+                    handleParamChange("videoBitrate", e.target.value)
+                  }
                 >
-                  <option value="h264">H.264</option>
-                  <option value="vp9">VP9</option>
-                  <option value="av1">AV1</option>
+                  {VideoBitrateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Audio Bitrate */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-gray-600 font-medium">
+                  Audio Bitrate
+                </label>
+                <select
+                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  value={params.audioBitrate}
+                  onChange={(e) =>
+                    handleParamChange("audioBitrate", e.target.value)
+                  }
+                >
+                  {AudioBitrateOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Video Codec */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-gray-600 font-medium">
+                  Video Codec
+                </label>
+                <select
+                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  value={params.videoCodec}
+                  onChange={(e) =>
+                    handleParamChange("videoCodec", e.target.value)
+                  }
+                >
+                  {VideoCodecOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Audio Codec */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-gray-600 font-medium">
+                  Audio Codec
+                </label>
+                <select
+                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  value={params.audioCodec}
+                  onChange={(e) =>
+                    handleParamChange("audioCodec", e.target.value)
+                  }
+                >
+                  {AudioCodecOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* CRF Value */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-gray-600 font-medium">
+                  CRF Value
+                </label>
+                <select
+                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  value={params.crfValue}
+                  onChange={(e) =>
+                    handleParamChange("crfValue", e.target.value)
+                  }
+                >
+                  {CRFValueOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Preset */}
+              <div className="flex flex-col space-y-1">
+                <label className="text-sm text-gray-600 font-medium">
+                  Preset
+                </label>
+                <select
+                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
+                  value={params.preset}
+                  onChange={(e) =>
+                    handleParamChange("preset", e.target.value)
+                  }
+                >
+                  {PresetOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 

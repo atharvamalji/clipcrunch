@@ -43,7 +43,7 @@ def create_db():
     print("Database created.")
 
 # Upload route
-@app.route('/upload', methods=['POST'])
+@app.route('/api/upload', methods=['POST'])
 def upload_video():
     if 'video' not in request.files:
         return jsonify({"error": "No video file part in the request"}), 400
@@ -116,12 +116,14 @@ def upload_video():
                 "video_bitrate": video_bitrate,
                 "audio_bitrate": audio_bitrate,
                 "crf_value": crf_value,
-                "preset_value": preset,
-                "codec": video_codec,
-                "audio_codec": audio_codec
+                "preset": preset,
+                "video_codec": video_codec,
+                "audio_codec": audio_codec,
+                "status": "uploaded"
             }
 
-            redis_conn.hset(file_uid, mapping=video_metadata)
+            print(f"[Backend] Added video with metadata to redis hashstore: {file_uid}")
+            redis_conn.hset(f'video:{file_uid}', mapping=video_metadata)
 
             # Enqueue video into processing_video queue
             chunking_queue.enqueue(
@@ -142,44 +144,41 @@ def upload_video():
             "error": str(e)
         }), 500
 
-@app.route('/processing_videos', methods=['GET'])
-def get_processing_videos():
+@app.route('/api/videos', methods=['GET'])
+def get_all_videos():
     try:
-        jobs = chunking_queue.jobs  # List of job objects
-        videos = []
+        # Query all videos from the database
+        videos = Video.query.all()
 
-        for job in jobs:
-            # When you enqueue you sent: process_video_task(video_id, save_path, params)
-            args = job.args
-            if len(args) >= 2:
-                video_id = args[0]  # The video_id is first arg
+        # Convert the query results into a list of dictionaries
+        video_list = [
+            {
+                "id": video.id,
+                "filename": video.filename,
+                "stored_filename": video.stored_filename,
+                "status": video.status,
+                "uploader_ip": video.uploader_ip,
+                "size": video.size,
+                "resolution": video.resolution.value,  # Convert Enum to string
+                "video_bitrate": video.video_bitrate.value,  # Convert Enum to string
+                "audio_bitrate": video.audio_bitrate.value,  # Convert Enum to string
+                "crf_value": video.crf_value.value,  # Convert Enum to string
+                "preset": video.preset.value,  # Convert Enum to string
+                "video_codec": video.video_codec,  # Convert Enum to string
+                "audio_codec": video.audio_codec,  # Convert Enum to string
+                "created_at": video.created_at.isoformat(),  # Convert to ISO format for consistency
+                "updated_at": video.updated_at.isoformat() if video.updated_at else None
+            }
+            for video in videos
+        ]
 
-                # Fetch video details from database
-                from models import Video
-                from database import db
-
-                video = db.session.get(Video, video_id)
-                if video:
-                    videos.append(video.to_dict())
-                else:
-                    videos.append({"video_id": video_id, "status": "not found in DB"})
-
-        return jsonify({
-            "processing_videos": videos,
-            "count": len(videos)
-        }), 200
+        # Return the video metadata as a JSON response
+        return jsonify(video_list), 200
 
     except Exception as e:
-        return jsonify({
-            "error": str(e)
-        }), 500
+        # In case of any error, return a 500 error with the error message
+        return jsonify({"error": str(e)}), 500
 
-
-# List all uploaded videos
-@app.route('/videos', methods=['GET'])
-def list_videos():
-    videos = Video.query.order_by(Video.created_at.desc()).all()
-    return jsonify([video.to_dict() for video in videos])
 
 if __name__ == '__main__':
     app.run(debug=True)
