@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 from database import db
 from models import Video
 from werkzeug.utils import secure_filename
@@ -11,7 +11,7 @@ from tasks import process_video_task
 
 
 TEMP_UPLOAD_FOLDER = 'temp_uploads'
-
+PROCESSED_FOLDER = 'processed_videos'
 CHUNKER_SERVICE_METHOD = 'chunker.chunk_video_task'
 
 # Connect to Redis
@@ -41,6 +41,14 @@ os.makedirs(TEMP_UPLOAD_FOLDER, exist_ok=True)
 def create_db():
     db.create_all()
     print("Database created.")
+
+@app.route('/api/downloads/<filename>', methods=['GET'])
+def download_processed(filename):
+    return send_from_directory(
+        directory=PROCESSED_FOLDER,
+        path=filename,
+        as_attachment=True
+    )
 
 # Upload route
 @app.route('/api/upload', methods=['POST'])
@@ -95,7 +103,7 @@ def upload_video():
             video = Video(
                 filename=original_filename,
                 stored_filename=stored_filename,
-                status='uploaded',
+                status='processing',
                 uploader_ip=request.remote_addr,  
                 size=file_size,
                 resolution=resolution,
@@ -150,29 +158,39 @@ def get_all_videos():
         # Query all videos from the database
         videos = Video.query.all()
 
-        # Convert the query results into a list of dictionaries
-        video_list = [
-            {
+        updated = False
+        for video in videos:
+            if video.status == 'processing':
+                processed_path = os.path.join(PROCESSED_FOLDER, video.stored_filename)
+                if os.path.exists(processed_path):
+                    video.status = 'processed'
+                    db.session.add(video)
+                    updated = True
+
+        if updated:
+            db.session.commit()
+
+        video_list = []
+        for video in videos:
+            video_list.append({
                 "id": video.id,
                 "filename": video.filename,
                 "stored_filename": video.stored_filename,
                 "status": video.status,
                 "uploader_ip": video.uploader_ip,
                 "size": video.size,
-                "resolution": f'{video.resolution.value[0]}x{video.resolution.value[1]}',  # Convert Enum to string
-                "video_bitrate": video.video_bitrate.value,  # Convert Enum to string
-                "audio_bitrate": video.audio_bitrate.value,  # Convert Enum to string
-                "crf_value": video.crf_value.value,  # Convert Enum to string
-                "preset": video.preset.value,  # Convert Enum to string
-                "video_codec": video.video_codec,  # Convert Enum to string
-                "audio_codec": video.audio_codec,  # Convert Enum to string
-                "created_at": video.created_at.isoformat(),  # Convert to ISO format for consistency
-                "updated_at": video.updated_at.isoformat() if video.updated_at else None
-            }
-            for video in videos
-        ]
+                "resolution": f"{video.resolution.value[0]}x{video.resolution.value[1]}",
+                "video_bitrate": video.video_bitrate.value,
+                "audio_bitrate": video.audio_bitrate.value,
+                "crf_value": video.crf_value.value,
+                "preset": video.preset.value,
+                "video_codec": video.video_codec,
+                "audio_codec": video.audio_codec,
+                "created_at": video.created_at.isoformat(),
+                "updated_at": video.updated_at.isoformat() if video.updated_at else None,
+                "download_url": f"/api/downloads/{video.stored_filename}" if video.status == "processed" else None
+            })
 
-        # Return the video metadata as a JSON response
         return jsonify(video_list), 200
 
     except Exception as e:
