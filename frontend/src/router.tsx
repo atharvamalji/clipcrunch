@@ -2,7 +2,6 @@ import { createBrowserRouter } from "react-router";
 
 import AppLayout from "./layout/AppLayout";
 import UploadVideo from "./components/upload/UploadVideo";
-import NodesPage from "./pages/nodes/NodesPage";
 import Videos from "./pages/videos/Videos";
 
 const router = createBrowserRouter([
@@ -17,10 +16,6 @@ const router = createBrowserRouter([
       {
         path: "upload-video",
         Component: UploadVideo,
-      },
-      {
-        path: "nodes",
-        Component: NodesPage,
       },
     ],
   },

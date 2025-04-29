@@ -228,35 +228,6 @@ export default function UploadVideo() {
 
             {/* Input Fields */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Chunk Size */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm text-gray-600 font-medium">
-                  Chunk Size (MB)
-                </label>
-                <input
-                  type="number"
-                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  value={params.chunkSize}
-                  onChange={(e) =>
-                    handleParamChange("chunkSize", parseInt(e.target.value))
-                  }
-                />
-              </div>
-
-              {/* Max Nodes */}
-              <div className="flex flex-col space-y-1">
-                <label className="text-sm text-gray-600 font-medium">
-                  Max Nodes
-                </label>
-                <input
-                  type="number"
-                  className="border p-2 focus:outline-none focus:ring-2 focus:ring-purple-400"
-                  value={params.maxNodes}
-                  onChange={(e) =>
-                    handleParamChange("maxNodes", parseInt(e.target.value))
-                  }
-                />
-              </div>
 
               {/* Target Resolution */}
               <div className="flex flex-col space-y-1">
@@ -397,9 +368,9 @@ export default function UploadVideo() {
                   ))}
                 </select>
               </div>
-
-              {/* Start Processing Button */}
-              <div>
+            </div>
+            {/* Start Processing Button */}
+            <div>
                 <button
                   onClick={handleUpload}
                   className="mt-4 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-md text-sm font-semibold"
@@ -407,7 +378,6 @@ export default function UploadVideo() {
                   Start Video Processing
                 </button>
               </div>
-            </div>
           </div>
         )}
       </div>
